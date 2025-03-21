@@ -100,6 +100,7 @@
             // 
             // panelPartners
             // 
+            panelPartners.AutoScroll = true;
             panelPartners.Dock = DockStyle.Fill;
             panelPartners.Location = new Point(0, 103);
             panelPartners.Name = "panelPartners";

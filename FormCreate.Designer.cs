@@ -194,6 +194,7 @@
             bttnConfirm.TabIndex = 16;
             bttnConfirm.Text = "Подтведить";
             bttnConfirm.UseVisualStyleBackColor = true;
+            bttnConfirm.Click += BttnConfirm_Click;
             // 
             // FormCreate
             // 

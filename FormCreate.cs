@@ -1,4 +1,5 @@
-﻿using PR4_Patners.Models;
+﻿using Npgsql.Internal.Postgres;
+using PR4_Patners.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -33,6 +34,7 @@ namespace PR4_Patners
             _panelPartners = panelPartners;
             _selectedPanel = selectedPanel;
             _discount = discount;
+            
 
             SetupTypes();
             NameTextBox.Text = _partner.Name;
@@ -69,91 +71,60 @@ namespace PR4_Patners
 
         private void BttnConfirm_Click(object sender, EventArgs e)
         {
-            if (_partner != null)
+            try
             {
-                try
+                using (Models.AppContext db = new Models.AppContext())
                 {
-                    Panel panel;
-                    using (Models.AppContext db = new Models.AppContext())
+                    if (_partner != null) // Редактирование существующего партнера
                     {
-                        string typeOfPartner = db.TypesOfPartners
-                            .Where(x => x.Id == _selectedTypeIndex)
-                            .Select(x => x.TypeOfPartner)
-                            .First();
-
                         Partner dbPartner = db.Partners.First(x => x.Id == _partner.Id);
-
-                        dbPartner.Id = _selectedTypeIndex;
                         dbPartner.Name = NameTextBox.Text;
                         dbPartner.LegalAdress = LegalAdressTextBox.Text;
                         dbPartner.Inn = IINTextBox.Text;
                         dbPartner.FiooftheDirector = DirectorTextBox.Text;
                         dbPartner.Phone = PhoneTextBox.Text;
                         dbPartner.Email = EmailTextBox.Text;
-                        dbPartner.Rating = Int16.Parse(RatingTextBox.Text);
+                        dbPartner.Rating = Convert.ToInt16(RatingTextBox.Text);
+                        dbPartner.IdTypeOfPerther = (short)((short)TypeComboBox.SelectedIndex + 1); // Обновление типа партнера
 
                         db.SaveChanges();
                     }
-
-                }
-                catch
-                {
-                    MessageBox.Show("Не удалось обновить запись");
-                }
-            }
-            else
-            {
-                try
-                {
-                    Panel panel;
-                    using (Models.AppContext db = new Models.AppContext())
+                    else // Добавление нового партнера
                     {
-                        string typeOfPartner = db.TypesOfPartners
-                            .Where(x => x.Id == _selectedTypeIndex)
-                            .Select(x => x.TypeOfPartner)
-                            .First();
+                        try
+                        {
+                            Partner partner = new Partner
+                            {
+                                Name = NameTextBox.Text,
+                                LegalAdress = LegalAdressTextBox.Text,
+                                Inn = IINTextBox.Text,
+                                FiooftheDirector = DirectorTextBox.Text,
+                                Phone = PhoneTextBox.Text,
+                                Email = EmailTextBox.Text,
+                                Rating = Convert.ToInt16(RatingTextBox.Text),
+                                IdTypeOfPerther = (short)((short)TypeComboBox.SelectedIndex + 1) // Установка типа партнера
+                            };
 
-                        
-                        Partner partner = new Partner();
-
-                       
-                        partner.Id = db.Partners
-                            .OrderByDescending(x => x.Id)
-                            .Select(x => x.Id)
-                            .First() + 1;
-                        partner.Id = _selectedTypeIndex;
-                        partner.Name = NameTextBox.Text;
-                        partner.LegalAdress = LegalAdressTextBox.Text;
-                        partner.Inn = IINTextBox.Text;
-                        partner.FiooftheDirector = DirectorTextBox.Text;
-                        partner.Phone = PhoneTextBox.Text;
-                        partner.Email = EmailTextBox.Text;
-                        partner.Rating = Int16.Parse(RatingTextBox.Text);
-
-                        db.Partners.Add(partner);
-                        db.SaveChanges();
-
-                        
-                        int idOfPartner = db.Partners
-                            .Where(x => x.Inn == partner.Inn)
-                            .Select(x => x.Id)
-                            .First();
+                           
+                            db.Partners.Add(partner);
+                            db.SaveChanges(); // Сохранение изменений в базе данных
+                            MessageBox.Show("Партнер успешно добавлен!");
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Не удалось сохранить запись: " + ex.Message);
+                        }
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Не удалось создать запись:" +
-                        $"\n{ex.Message}");
-                }
             }
-            this.Close();
-        }
-
-        private void TypeComboBox_TextChanged(object sender, EventArgs e)
-        {
-            _selectedTypeIndex = TypeComboBox.SelectedIndex + 1;
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось сохранить запись: " + ex.Message);
+            }
+            finally
+            {
+                this.Close();
+            }
         }
     }
-
-
 }

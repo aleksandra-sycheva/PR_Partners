@@ -7,7 +7,7 @@ namespace PR4_Patners
     {
         private static int y = 0;
         private static int heigth = 140;
-        private static Panel? _selectedPanel;
+        private static Panel? selectedPanel;
         public FormMain()
         {
             InitializeComponent();
@@ -134,25 +134,25 @@ namespace PR4_Patners
 
         private void bttnUpdate_Click(object sender, EventArgs e)
         {
-            if (_selectedPanel != null)
+            if (selectedPanel != null)
             {
                 Partner partner;
                 using (Models.AppContext db = new Models.AppContext())
                 {
-                    int id = Int32.Parse(_selectedPanel.Controls.Find("labelId", true)[0].Text);
+                    int id = Int32.Parse(selectedPanel.Controls.Find("labelId", true)[0].Text);
                     partner = db.Partners
                         .Where(x => x.Id == id)
                         .First();
                 }
 
-                string discount = _selectedPanel.Controls.Find("labelDiscount", true)[0].Text;
+                string discount = selectedPanel.Controls.Find("labelDiscount", true)[0].Text;
                 discount = discount.Substring(0, discount.Length - 1);
 
-                FormCreate entry = new FormCreate(ref panelPartners, _selectedPanel, partner, discount);
+                FormCreate entry = new FormCreate(ref panelPartners, selectedPanel, partner, discount);
                 entry.ShowDialog();
 
-                _selectedPanel.BackColor = Color.White;
-                _selectedPanel = null;
+                selectedPanel.BackColor = Color.White;
+                selectedPanel = null;
 
                 y = 0;
                 panelPartners.Controls.Clear();
@@ -166,20 +166,38 @@ namespace PR4_Patners
 
         private void bttnDelete_Click(object sender, EventArgs e)
         {
-            if (_selectedPanel != null)
+            if (selectedPanel != null)
             {
-                using (Models.AppContext db = new Models.AppContext())
+                try
                 {
-                    int id = Int32.Parse(_selectedPanel.Controls.Find("labelId", true)[0].Text);
-                    Partner partner = db.Partners
-                        .Where(x => x.Id == id)
-                        .First();
-                    db.Partners.Remove(partner);
-                    db.SaveChanges();
+                    using (Models.AppContext db = new Models.AppContext())
+                    {
+                        // Получаем ID партнера из выбранной панели
+                        int id = Int32.Parse(selectedPanel.Controls.Find("labelId", true)[0].Text);
+
+                        // Находим партнера в базе данных
+                        Partner partner = db.Partners.FirstOrDefault(x => x.Id == id);
+
+                        if (partner != null)
+                        {
+                            db.Partners.Remove(partner);
+                            db.SaveChanges();
+                            MessageBox.Show("Партнер успешно удален!");
+                        }
+                        else
+                        {
+                            MessageBox.Show("Партнер не найден.");
+                        }
+                    }
+
+                    y = 0;
+                    panelPartners.Controls.Clear();
+                    SetupPanels();
                 }
-                y = 0;
-                panelPartners.Controls.Clear();
-                SetupPanels();
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Не удалось удалить партнера: " + ex.Message);
+                }
             }
             else
             {
@@ -189,9 +207,9 @@ namespace PR4_Patners
 
         private void bttnHistory_Click(object sender, EventArgs e)
         {
-            if (_selectedPanel != null)
+            if (selectedPanel != null)
             {
-                FormHistory entry = new FormHistory(Int32.Parse(_selectedPanel.Controls.Find("labelId", true)[0].Text));
+                FormHistory entry = new FormHistory(Int32.Parse(selectedPanel.Controls.Find("labelId", true)[0].Text));
                 entry.ShowDialog();
             }
             else
@@ -202,13 +220,13 @@ namespace PR4_Patners
 
         private static void ItemSelected_Click(object sender, EventArgs e)
         {
-            if (_selectedPanel != null)
+            if (selectedPanel != null)
             {
-                _selectedPanel.BackColor = Color.White;
+                selectedPanel.BackColor = Color.White;
             }
 
-            _selectedPanel = (Panel)sender;
-            _selectedPanel.BackColor = SystemColors.ActiveCaption;
+            selectedPanel = (Panel)sender;
+            selectedPanel.BackColor = SystemColors.ActiveCaption;
         }
 
         private void FormMain_SizeChanged(object sender, EventArgs e)
